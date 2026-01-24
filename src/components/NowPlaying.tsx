@@ -137,7 +137,7 @@ export default function NowPlaying({ volume }: { volume: number | null }) {
             {track.name}
           </motion.h2>
           <motion.p
-            className="text-white/60 text-sm mt-1 truncate"
+            className="text-white/60 text-sm mt-1 line-clamp-3"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
