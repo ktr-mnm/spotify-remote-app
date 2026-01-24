@@ -58,7 +58,7 @@ export default function MainUI() {
   };
 
   const unmute = () => {
-    setSpotifyVolume(lastVolume || 20);
+    setSpotifyVolume(lastVolume || 10);
   };
 
   return (
@@ -144,66 +144,6 @@ export default function MainUI() {
           {loading ? "⏳" : "🔈"}
         </motion.button>
       </div>
-
-      {/* 🎚 Volume Controls Card */}
-      {/* <motion.div
-        className="w-full max-w-md bg-white/5 backdrop-blur-xl rounded-3xl p-5 shadow-2xl border border-white/10 grid grid-cols-2 gap-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <motion.button
-          whileTap={{ scale: 0.92 }}
-          whileHover={{ scale: 1.03 }}
-          onClick={volumeUp}
-          disabled={loading || volume === null}
-          className="h-20 rounded-2xl bg-blue-500/15 text-blue-400 text-3xl font-semibold
-                     border border-blue-400/20 shadow-inner
-                     hover:bg-blue-500/25 hover:text-blue-300
-                     transition-all duration-150 disabled:opacity-40"
-        >
-          {loading ? "⏳" : "＋"}
-        </motion.button>
-
-        <motion.button
-          whileTap={{ scale: 0.92 }}
-          whileHover={{ scale: 1.03 }}
-          onClick={volumeDown}
-          disabled={loading || volume === null}
-          className="h-20 rounded-2xl bg-blue-500/15 text-blue-400 text-3xl font-semibold
-                     border border-blue-400/20 shadow-inner
-                     hover:bg-blue-500/25 hover:text-blue-300
-                     transition-all duration-150 disabled:opacity-40"
-        >
-          {loading ? "⏳" : "ー"}
-        </motion.button>
-
-        <motion.button
-          whileTap={{ scale: 0.92 }}
-          whileHover={{ scale: 1.03 }}
-          onClick={mute}
-          disabled={loading || volume === null || volume === 0}
-          className="h-20 rounded-2xl bg-red-500/15 text-red-400 text-3xl font-semibold
-                     border border-red-400/20 shadow-inner
-                     hover:bg-red-500/25 hover:text-red-300
-                     transition-all duration-150 disabled:opacity-40"
-        >
-          {loading ? "⏳" : "🔇"}
-        </motion.button>
-
-        <motion.button
-          whileTap={{ scale: 0.92 }}
-          whileHover={{ scale: 1.03 }}
-          onClick={unmute}
-          disabled={loading || volume === null || volume > 0}
-          className="h-20 rounded-2xl bg-green-500/15 text-green-400 text-3xl font-semibold
-                     border border-green-400/20 shadow-inner
-                     hover:bg-green-500/25 hover:text-green-300
-                     transition-all duration-150 disabled:opacity-40"
-        >
-          {loading ? "⏳" : "🔈"}
-        </motion.button>
-      </motion.div> */}
 
       {/* 🚪 Logout */}
       <motion.div
