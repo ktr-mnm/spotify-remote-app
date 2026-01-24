@@ -5,7 +5,7 @@ import LoginScreen from "./components/LoginScreen";
 import { setUnauthorizedHandler } from "./api/spotifyFetch";
 
 const clientId = "522ee48389954795ba7a7750a2c00ef8";
-const redirectUri = "http://127.0.0.1:5173/callback";
+const redirectUri = import.meta.env.VITE_REDIRECT_URI;
 const scope = "user-read-playback-state user-modify-playback-state";
 
 
@@ -35,8 +35,8 @@ function App() {
 
   useEffect(() => {
     // /callback の時だけ動作させる
-    if (!window.location.pathname.startsWith("/callback")) return;
-    console.log(window.location.pathname)
+    // if (!window.location.pathname.startsWith("/callback")) return;
+    // console.log(window.location.pathname)
 
     try {
       const params = new URLSearchParams(window.location.search);
@@ -69,9 +69,10 @@ function App() {
 
         if (data.access_token) {
           localStorage.setItem("access_token", data.access_token);
+          if (data.refresh_token) {
+            localStorage.setItem("refresh_token", data.refresh_token);
+          }
           setToken(data.access_token);
-
-          // 成功したらトップに戻る
           window.history.replaceState({}, "", "/");
         } else {
           alert("ログイン失敗！");
@@ -108,6 +109,7 @@ function App() {
 
   const logout = () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     setToken(null);
   };
 

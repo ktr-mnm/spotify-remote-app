@@ -4,93 +4,91 @@ export function setUnauthorizedHandler(fn: () => void) {
   unauthorizedHandler = fn;
 }
 
-export async function spotifyFetch(url: string, options: RequestInit = {}) {
+const CLIENT_ID = "522ee48389954795ba7a7750a2c00ef8";
+
+// 🔄 リフレッシュ関数
+async function refreshAccessToken() {
+  const refreshToken = localStorage.getItem("refresh_token");
+  if (!refreshToken) return null;
+
+  const body = new URLSearchParams();
+  body.append("client_id", CLIENT_ID);
+  body.append("grant_type", "refresh_token");
+  body.append("refresh_token", refreshToken);
+
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+
+  const data = await res.json();
+  console.log("REFRESH TOKEN RESPONSE:", data);
+
+  if (data.access_token) {
+    localStorage.setItem("access_token", data.access_token);
+    return data.access_token;
+  }
+
+  return null;
+}
+
+// 共通 fetch（GET/PUT/POST 全対応）
+async function spotifyFetchBase(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem("access_token");
 
-  try {
-    const res = await fetch(url, {
+  const doFetch = async (accessToken: string | null) =>
+    fetch(url, {
       ...options,
       headers: {
-        Authorization: `Bearer ${token}`,
-        ...options.headers,
+        ...(options.headers || {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
     });
 
-    // Token無効
+  try {
+    let res = await doFetch(token);
+
     if (res.status === 401) {
-      unauthorizedHandler?.();
-      return null;
+      // 🔄 自動リフレッシュ
+      const newToken = await refreshAccessToken();
+      if (!newToken) {
+        unauthorizedHandler?.();
+        return null;
+      }
+      // 🔁 リトライ
+      res = await doFetch(newToken);
     }
 
-    // Spotifyはエラーでも JSON 返すのでチェック
     if (!res.ok) {
       console.error("Spotify API Error:", res.status);
       return null;
     }
 
-    return await res.json();
+    const text = await res.text();
+    return text ? JSON.parse(text) : true; // PUT/POSTはtrue返す
 
   } catch (err) {
     console.error("Network fetch error:", err);
-    // ネットワーク落ちてる or fetch が throw → 強制ログアウトでもOK
     unauthorizedHandler?.();
     return null;
   }
+}
+
+// === 公開API ===
+
+export async function spotifyFetch(url: string, options: RequestInit = {}) {
+  return spotifyFetchBase(url, options);
 }
 
 export async function spotifyGet(url: string, options: RequestInit = {}) {
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    unauthorizedHandler?.();
-    return null;
-  }
-
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-
-  if (res.status === 401) {
-    unauthorizedHandler?.();
-    return null;
-  }
-
-  if (!res.ok) return null;
-
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  return spotifyFetchBase(url, { ...options, method: "GET" });
 }
-
 
 export async function spotifyCmd(url: string, options: RequestInit = {}) {
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    unauthorizedHandler?.();
-    return null;
-  }
-
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-
-  if (res.status === 401) {
-    unauthorizedHandler?.();
-    return null;
-  }
-
-  if (!res.ok) {
-    console.error("Spotify CMD Error", res.status);
-    return null;
-  }
-
-  // PUT は 204 No Content が普通なので返り値なしでOK
-  return true;
+  return spotifyFetchBase(url, options);
 }
 
+export function logout() {
+  unauthorizedHandler?.();
+}
