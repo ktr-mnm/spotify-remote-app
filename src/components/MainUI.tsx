@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import NowPlaying from "./NowPlaying";
 import { spotifyCmd, spotifyGet, logout } from "../api/spotifyFetch";
@@ -7,6 +7,7 @@ export default function MainUI() {
   const [loading, setLoading] = useState(false);
   const [volume, setVolume] = useState<number | null>(null);
   const [lastVolume, setLastVolume] = useState<number>(10); // ミュート解除用
+  const lastLocalVolumeChange = useRef<number>(0);
 
   // 🔊 初回 + 定期的に現在音量を取得（他端末操作と同期）
   useEffect(() => {
@@ -22,13 +23,12 @@ export default function MainUI() {
     };
 
     fetchVolume(); // 初回
-    // const interval = setInterval(fetchVolume, 15000); // 15秒ごと同期
-    // return () => clearInterval(interval);
   }, []);
 
   const setSpotifyVolume = async (newVolume: number) => {
     setLoading(true);
     try {
+      lastLocalVolumeChange.current = Date.now();
       await spotifyCmd(
         `https://api.spotify.com/v1/me/player/volume?volume_percent=${newVolume}`,
         { method: "PUT" }
@@ -68,7 +68,7 @@ export default function MainUI() {
 
       {/* 🎧 Now Playing Card */}
       <div className="w-full max-w-md mb-8">
-        <NowPlaying volume={volume} setVolume={setVolume}/>
+        <NowPlaying volume={volume} setVolume={setVolume} lastLocalVolumeChange={lastLocalVolumeChange}/>
       </div>
 
       <div className="w-full max-w-md grid grid-cols-2 gap-4">

@@ -11,7 +11,7 @@ interface Track {
 }
 
 export default function NowPlaying(
-  { volume, setVolume}: { volume: number | null, setVolume: React.Dispatch<React.SetStateAction<number | null>> }) {
+  { volume, setVolume, lastLocalVolumeChange}: { volume: number | null, setVolume: React.Dispatch<React.SetStateAction<number | null>>, lastLocalVolumeChange: React.RefObject<number>;}) {
   const [track, setTrack] = useState<Track | null>(null);
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -34,7 +34,14 @@ export default function NowPlaying(
         setTrack(res.item);
         setProgress(res.progress_ms);
         setIsPlaying(res.is_playing);
-        setVolume(res.device.volume_percent);
+
+        const now = Date.now();
+        const elapsed = now - lastLocalVolumeChange.current;
+
+        // 👇 直近2秒以内にローカル操作があったら同期しない
+        if (elapsed > 2000) {
+          setVolume(res.device.volume_percent);
+        }
       }
     };
 
