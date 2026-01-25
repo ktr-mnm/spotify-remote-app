@@ -6,7 +6,7 @@ import { spotifyCmd, spotifyGet, logout } from "../api/spotifyFetch";
 export default function MainUI() {
   const [loading, setLoading] = useState(false);
   const [volume, setVolume] = useState<number | null>(null);
-  const [lastVolume, setLastVolume] = useState<number>(20); // ミュート解除用
+  const [lastVolume, setLastVolume] = useState<number>(10); // ミュート解除用
 
   // 🔊 初回 + 定期的に現在音量を取得（他端末操作と同期）
   useEffect(() => {
@@ -22,8 +22,8 @@ export default function MainUI() {
     };
 
     fetchVolume(); // 初回
-    const interval = setInterval(fetchVolume, 15000); // 15秒ごと同期
-    return () => clearInterval(interval);
+    // const interval = setInterval(fetchVolume, 15000); // 15秒ごと同期
+    // return () => clearInterval(interval);
   }, []);
 
   const setSpotifyVolume = async (newVolume: number) => {
@@ -62,11 +62,13 @@ export default function MainUI() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black text-white flex flex-col items-center px-4 pt-8 pb-16 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black text-white
+                  flex flex-col items-center px-4 pt-8 pb-16 overflow-hidden"
+    >
 
       {/* 🎧 Now Playing Card */}
       <div className="w-full max-w-md mb-8">
-        <NowPlaying volume={volume} />
+        <NowPlaying volume={volume} setVolume={setVolume}/>
       </div>
 
       <div className="w-full max-w-md grid grid-cols-2 gap-4">
@@ -157,10 +159,10 @@ export default function MainUI() {
           whileHover={{ scale: 1.05 }}
           onClick={logout}
           className="flex items-center gap-2 px-6 py-3 rounded-full
-                     bg-red-500/10 text-red-400 border border-red-400/20
-                     shadow-xl backdrop-blur
-                     hover:bg-red-500/20 hover:text-red-300
-                     transition-all duration-150"
+                    bg-red-500/10 text-red-400 border border-red-400/20
+                    shadow-xl backdrop-blur
+                    hover:bg-red-500/20 hover:text-red-300
+                    transition-all duration-150"
         >
           <span>ログアウト</span>
           <span className="text-lg">⎋</span>
