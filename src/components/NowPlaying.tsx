@@ -10,7 +10,8 @@ interface Track {
   duration_ms: number;
 }
 
-export default function NowPlaying({ volume }: { volume: number | null }) {
+export default function NowPlaying(
+  { volume, setVolume}: { volume: number | null, setVolume: React.Dispatch<React.SetStateAction<number | null>> }) {
   const [track, setTrack] = useState<Track | null>(null);
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -33,6 +34,7 @@ export default function NowPlaying({ volume }: { volume: number | null }) {
         setTrack(res.item);
         setProgress(res.progress_ms);
         setIsPlaying(res.is_playing);
+        setVolume(res.device.volume_percent);
       }
     };
 
