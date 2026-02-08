@@ -1,40 +1,75 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import NowPlaying from "./NowPlaying";
-import { spotifyCmd, spotifyGet, logout } from "../api/spotifyFetch";
+import { spotifyCmd, spotifyGet, setLogger } from "../api/spotifyFetch";
+import ArtistPanel from "./ArtistPanel";
+import StatusPanel from "./StatusPanel";
+import LogoutButton from "./LogoutButton";
+import type { LogItem } from "../types";
+
+const MAX_LOGS = 100;
 
 export default function MainUI() {
   const [loading, setLoading] = useState(false);
   const [volume, setVolume] = useState<number | null>(null);
-  const [lastVolume, setLastVolume] = useState<number>(10); // ミュート解除用
+  const [lastVolume, setLastVolume] = useState<number>(10);
   const lastLocalVolumeChange = useRef<number>(0);
+  const [artists, setArtists] = useState<any[] | null>(null);
+  const [artistIndex, setArtistIndex] = useState(0);
+  const [logs, setLogs] = useState<LogItem[]>([]);
 
-  // 🔊 初回 + 定期的に現在音量を取得（他端末操作と同期）
+  const addLog = (message: string, type: LogItem["type"] = "info") => {
+    setLogs((prev) => {
+      const next = [
+        ...prev,
+        {
+          id: Date.now() + Math.random(),
+          message,
+          type,
+          time: new Date().toLocaleTimeString(),
+        },
+      ];
+      if (next.length > MAX_LOGS) {
+        return next.slice(next.length - MAX_LOGS);
+      }
+      return next;
+    });
+  };
+
   useEffect(() => {
+    if (artists?.length) setArtistIndex(0);
+  }, [artists]);
+
+  useEffect(() => {
+    setLogger(addLog);
     const fetchVolume = async () => {
       try {
+        addLog("Fetching current volume...");
         const state = await spotifyGet("https://api.spotify.com/v1/me/player");
         if (state?.device?.volume_percent !== undefined) {
           setVolume(state.device.volume_percent);
+          addLog(`Volume synced: ${state.device.volume_percent}%`, "success");
         }
       } catch {
+        addLog("Failed to fetch volume", "error");
         console.warn("音量取得失敗");
       }
     };
-
-    fetchVolume(); // 初回
+    fetchVolume();
   }, []);
 
   const setSpotifyVolume = async (newVolume: number) => {
     setLoading(true);
     try {
       lastLocalVolumeChange.current = Date.now();
+      addLog(`Setting volume to ${newVolume}%...`);
       await spotifyCmd(
         `https://api.spotify.com/v1/me/player/volume?volume_percent=${newVolume}`,
         { method: "PUT" }
       );
       setVolume(newVolume);
+      addLog(`Volume set to ${newVolume}%`, "success");
     } catch {
+      addLog("Volume change failed", "error");
       alert("音量変更失敗！");
     } finally {
       setLoading(false);
@@ -54,120 +89,49 @@ export default function MainUI() {
   const mute = () => {
     if (volume === null) return;
     setLastVolume(volume > 0 ? volume : lastVolume);
+    addLog("Muted audio");
     setSpotifyVolume(0);
   };
 
   const unmute = () => {
+    addLog("Unmuted audio");
     setSpotifyVolume(lastVolume || 10);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black text-white
-                  flex flex-col items-center px-4 pt-8 pb-16 overflow-hidden"
-    >
+                    flex flex-col items-center px-4 pt-8 pb-16 overflow-hidden">
 
-      {/* 🎧 Now Playing Card */}
-      <div className="w-full max-w-md mb-8">
-        <NowPlaying volume={volume} setVolume={setVolume} lastLocalVolumeChange={lastLocalVolumeChange}/>
+      <div className="w-full max-w-[1600px] mx-auto
+                    flex flex-col md:flex-row md:items-stretch md:justify-center gap-10 md:gap-x-15 md:max-h-[600px]">
+
+        <div className="w-full md:flex-[3] md:min-h-0">
+          <NowPlaying
+            volume={volume}
+            setVolume={setVolume}
+            lastLocalVolumeChange={lastLocalVolumeChange}
+            addLog={addLog}
+            setArtists={setArtists}
+          />
+        </div>
+
+        <ArtistPanel
+          artists={artists}
+          artistIndex={artistIndex}
+          onPrev={() => setArtistIndex((i) => Math.max(0, i - 1))}
+          onNext={() => setArtistIndex((i) => Math.min(Math.max(0, (artists?.length ?? 1) - 1), i + 1))}
+          volume={volume}
+          loading={loading}
+          onVolumeUp={volumeUp}
+          onVolumeDown={volumeDown}
+          onMute={mute}
+          onUnmute={unmute}
+        />
+
+        <StatusPanel logs={logs} />
       </div>
 
-      <div className="w-full max-w-md grid grid-cols-2 gap-4">
-        {/* 🔊 Volume Up */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{
-            scale: 0.92,
-            boxShadow: "0 0 0 14px rgba(59,130,246,0.25)",
-          }}
-          onClick={volumeUp}
-          disabled={loading || volume === null}
-          className="h-20 rounded-2xl bg-blue-500/15 text-blue-400 text-3xl font-semibold
-                    shadow-lg hover:bg-blue-500/25 hover:text-blue-300
-                    transition-all duration-150 disabled:opacity-40"
-        >
-          {loading ? "⏳" : "＋"}
-        </motion.button>
-
-        {/* 🔉 Volume Down */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{
-            scale: 0.92,
-            boxShadow: "0 0 0 14px rgba(59,130,246,0.25)",
-          }}
-          onClick={volumeDown}
-          disabled={loading || volume === null}
-          className="h-20 rounded-2xl bg-blue-500/15 text-blue-400 text-3xl font-semibold
-                    shadow-lg hover:bg-blue-500/25 hover:text-blue-300
-                    transition-all duration-150 disabled:opacity-40"
-        >
-          {loading ? "⏳" : "ー"}
-        </motion.button>
-
-        {/* 🔇 Mute */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{
-            scale: 0.92,
-            boxShadow: "0 0 0 14px rgba(239,68,68,0.25)",
-          }}
-          animate={
-            volume === 0
-              ? { scale: [1, 1.05, 1] }
-              : { scale: 1 }
-          }
-          transition={{
-            repeat: volume === 0 ? Infinity : 0,
-            duration: 1.2,
-            ease: "easeInOut",
-          }}
-          onClick={mute}
-          disabled={loading || volume === null || volume === 0}
-          className="h-20 rounded-2xl bg-red-500/15 text-red-400 text-3xl font-semibold
-                    shadow-lg hover:bg-red-500/25 hover:text-red-300
-                    transition-all duration-150 disabled:opacity-40"
-        >
-          {loading ? "⏳" : "🔇"}
-        </motion.button>
-
-        {/* 🔈 Unmute */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{
-            scale: 0.92,
-            boxShadow: "0 0 0 14px rgba(34,197,94,0.25)",
-          }}
-          onClick={unmute}
-          disabled={loading || volume === null || volume > 0}
-          className="h-20 rounded-2xl bg-green-500/15 text-green-400 text-3xl font-semibold
-                    shadow-lg hover:bg-green-500/25 hover:text-green-300
-                    transition-all duration-150 disabled:opacity-40"
-        >
-          {loading ? "⏳" : "🔈"}
-        </motion.button>
-      </div>
-
-      {/* 🚪 Logout */}
-      <motion.div
-        className="fixed bottom-4 left-0 right-0 flex justify-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          whileHover={{ scale: 1.05 }}
-          onClick={logout}
-          className="flex items-center gap-2 px-6 py-3 rounded-full
-                    bg-red-500/10 text-red-400 border border-red-400/20
-                    shadow-xl backdrop-blur
-                    hover:bg-red-500/20 hover:text-red-300
-                    transition-all duration-150"
-        >
-          <span>ログアウト</span>
-          <span className="text-lg">⎋</span>
-        </motion.button>
-      </motion.div>
+      <LogoutButton />
     </div>
   );
 }

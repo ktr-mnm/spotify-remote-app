@@ -73,7 +73,8 @@ function App() {
             localStorage.setItem("refresh_token", data.refresh_token);
           }
           setToken(data.access_token);
-          window.history.replaceState({}, "", "/");
+          // base path を維持（GitHub Pages など /spotify-remote-app/ で配信する場合）
+          window.history.replaceState({}, "", import.meta.env.BASE_URL || "/");
         } else {
           alert("ログイン失敗！");
         }

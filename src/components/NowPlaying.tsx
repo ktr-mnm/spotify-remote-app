@@ -5,13 +5,19 @@ import { motion, AnimatePresence } from "framer-motion";
 interface Track {
   id: string;
   name: string;
-  artists: { name: string }[];
+  artists: { id: string; name: string }[];
   album: { images: { url: string }[] };
   duration_ms: number;
 }
 
 export default function NowPlaying(
-  { volume, setVolume, lastLocalVolumeChange}: { volume: number | null, setVolume: React.Dispatch<React.SetStateAction<number | null>>, lastLocalVolumeChange: React.RefObject<number>;}) {
+  { volume, setVolume, lastLocalVolumeChange, addLog, setArtists }: 
+  { volume: number | null,
+    setVolume: React.Dispatch<React.SetStateAction<number | null>>,
+    lastLocalVolumeChange: React.RefObject<number>,
+    addLog: (message: string, type?: "info" | "success" | "error") => void,
+    setArtists: React.Dispatch<React.SetStateAction<any[] | null>>;
+  }) {
   const [track, setTrack] = useState<Track | null>(null);
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -27,6 +33,7 @@ export default function NowPlaying(
       if (!res) {
         setTrack(null);
         setIsPlaying(false);
+        setArtists?.(null);
         return;
       }
 
@@ -42,6 +49,25 @@ export default function NowPlaying(
         if (elapsed > 2000) {
           setVolume(res.device.volume_percent);
         }
+
+        // 👤 再生中トラックの全アーティスト情報を取得（Get Several Artists）
+        const artistIds = res.item.artists?.map((a: { id: string }) => a.id).filter(Boolean) ?? [];
+        if (artistIds.length > 0) {
+          try {
+            const idsParam = artistIds.slice(0, 50).join(",");
+            const data = await spotifyGet(`https://api.spotify.com/v1/artists?ids=${idsParam}`);
+            const list = data?.artists?.filter(Boolean) ?? [];
+            setArtists?.(list);
+          } catch {
+            setArtists?.(null);
+          }
+        } else {
+          setArtists?.(null);
+        }
+
+        addLog("🎧 Playback status fetched", "success");
+      } else {
+        setArtists?.(null);
       }
     };
 
@@ -68,8 +94,11 @@ export default function NowPlaying(
 
   if (!track) {
     return (
-      <div className="text-center text-white/60 py-16">
-        🎧 再生中の曲はありません
+      <div className="w-full bg-white/5 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/10
+                  flex items-center justify-center min-h-[200px]">
+        <p className="text-center text-white/60 py-8">
+          🎧 再生中の曲はありません
+        </p>
       </div>
     );
   }
@@ -82,7 +111,7 @@ export default function NowPlaying(
   return (
     <>
       <motion.div
-        className="w-full max-w-md mx-auto bg-white/5 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/10"
+        className="w-full mx-auto bg-white/5 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
@@ -106,7 +135,7 @@ export default function NowPlaying(
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
               transition={{ duration: 0.4 }}
-              className="relative w-72 h-72 sm:w-80 sm:h-80 rounded-3xl shadow-2xl z-10 cursor-pointer"
+              className="relative w-72 h-72 md:w-100 md:h-100 rounded-3xl shadow-2xl z-10 cursor-pointer"
               onClick={() => setShowModal(true)}
             />
           </AnimatePresence>
@@ -114,7 +143,7 @@ export default function NowPlaying(
           {/* 🔊 Volume Badge */}
           {volume !== null && (
             <motion.div
-              className="absolute -bottom-4 -right-4 flex items-center gap-2
+              className="absolute -bottom-4 -right-4 xl:right-13 flex items-center gap-2
                         bg-gradient-to-br from-blue-500/80 to-cyan-400/80
                         text-white text-lg font-semibold
                         px-4 py-2 rounded-full shadow-xl backdrop-blur
@@ -203,6 +232,8 @@ export default function NowPlaying(
           </motion.div>
         )}
       </AnimatePresence>
+
+      
     </>
   );
 }

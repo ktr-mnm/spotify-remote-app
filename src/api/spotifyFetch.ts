@@ -1,8 +1,23 @@
+// 異常ログアウト系
 let unauthorizedHandler: (() => void) | null = null;
 
 export function setUnauthorizedHandler(fn: () => void) {
   unauthorizedHandler = fn;
 }
+
+// ログ処理
+type Logger = (message: string, type?: "info" | "success" | "error") => void;
+
+let logger: Logger | null = null;
+
+export const setLogger = (fn: Logger) => {
+  logger = fn;
+};
+
+const log = (message: string, type: "info" | "success" | "error" = "info") => {
+  if (logger) logger(message, type);
+};
+
 
 const CLIENT_ID = "522ee48389954795ba7a7750a2c00ef8";
 
@@ -28,6 +43,7 @@ async function refreshAccessToken() {
   if (data.access_token) {
     localStorage.setItem("access_token", data.access_token);
     localStorage.setItem("refresh_token", data.refresh_token);
+    log("🔑 Access token refreshed successfully", "success");
     return data.access_token;
   }
 
@@ -52,6 +68,8 @@ async function spotifyFetchBase(url: string, options: RequestInit = {}) {
 
     if (res.status === 401) {
       // 🔄 自動リフレッシュ
+      log("⚠️ Access token expired", "error");
+      log("🔄 Refreshing access token...");
       const newToken = await refreshAccessToken();
       if (!newToken) {
         unauthorizedHandler?.();
