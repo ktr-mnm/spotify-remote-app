@@ -34,9 +34,6 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("access_token"));
 
   useEffect(() => {
-    // /callback の時だけ動作させる
-    // if (!window.location.pathname.startsWith("/callback")) return;
-    // console.log(window.location.pathname)
 
     try {
       const params = new URLSearchParams(window.location.search);
@@ -46,6 +43,10 @@ function App() {
       const codeVerifier = localStorage.getItem("code_verifier");
       if (!codeVerifier) {
         console.error("code_verifier がありません");
+        return;
+      }
+
+      if (token) {
         return;
       }
 
