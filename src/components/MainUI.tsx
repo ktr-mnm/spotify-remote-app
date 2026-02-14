@@ -6,6 +6,14 @@ import StatusPanel from "./StatusPanel";
 import LogoutButton from "./LogoutButton";
 import type { LogItem } from "../types";
 
+interface Track {
+  id: string;
+  name: string;
+  artists: { id: string; name: string }[];
+  album: { images: { url: string }[] };
+  duration_ms: number;
+}
+
 const MAX_LOGS = 100;
 
 export default function MainUI() {
@@ -16,6 +24,7 @@ export default function MainUI() {
   const [artists, setArtists] = useState<any[] | null>(null);
   const [artistIndex, setArtistIndex] = useState(0);
   const [logs, setLogs] = useState<LogItem[]>([]);
+  const [nextTracks, setNextTracks] = useState<Track[]>([]);
 
   const addLog = (message: string, type: LogItem["type"] = "info") => {
     setLogs((prev) => {
@@ -112,6 +121,7 @@ export default function MainUI() {
             lastLocalVolumeChange={lastLocalVolumeChange}
             addLog={addLog}
             setArtists={setArtists}
+            setNextTrack={setNextTracks}
           />
         </div>
 
@@ -128,7 +138,7 @@ export default function MainUI() {
           onUnmute={unmute}
         />
 
-        <StatusPanel logs={logs} />
+        <StatusPanel logs={logs} nextTracks={nextTracks} />
       </div>
 
       <LogoutButton />

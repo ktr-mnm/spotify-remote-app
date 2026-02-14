@@ -11,12 +11,13 @@ interface Track {
 }
 
 export default function NowPlaying(
-  { volume, setVolume, lastLocalVolumeChange, addLog, setArtists }: 
+  { volume, setVolume, lastLocalVolumeChange, addLog, setArtists, setNextTrack }: 
   { volume: number | null,
     setVolume: React.Dispatch<React.SetStateAction<number | null>>,
     lastLocalVolumeChange: React.RefObject<number>,
     addLog: (message: string, type?: "info" | "success" | "error") => void,
     setArtists: React.Dispatch<React.SetStateAction<any[] | null>>;
+    setNextTrack?: React.Dispatch<React.SetStateAction<Track[]>>;
   }) {
   const [track, setTrack] = useState<Track | null>(null);
   const [progress, setProgress] = useState(0);
@@ -63,6 +64,18 @@ export default function NowPlaying(
           }
         } else {
           setArtists?.(null);
+        }
+
+        // 🎵 キュー情報を取得
+        try {
+          const queueRes = await spotifyGet("https://api.spotify.com/v1/me/player/queue");
+          if (queueRes?.queue && queueRes.queue.length > 0) {
+            setNextTrack?.(queueRes.queue.slice(0, 6));
+          } else {
+            setNextTrack?.([]);
+          }
+        } catch {
+          setNextTrack?.([]);
         }
 
         addLog("🎧 Playback status fetched", "success");
@@ -232,8 +245,6 @@ export default function NowPlaying(
           </motion.div>
         )}
       </AnimatePresence>
-
-      
     </>
   );
 }
