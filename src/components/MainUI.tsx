@@ -46,7 +46,7 @@ export default function MainUI() {
 
   useEffect(() => {
     if (artists?.length) setArtistIndex(0);
-  }, [artists]);
+  }, [artists?.length]);
 
   useEffect(() => {
     setLogger(addLog);

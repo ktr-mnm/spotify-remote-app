@@ -22,52 +22,60 @@ export default function ArtistCard({ artist, currentIndex = 0, totalCount = 1, o
 
   return (
     <motion.div
-      className="w-full bg-white/5 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/10"
+      className="w-full bg-white/5 backdrop-blur-xl rounded-3xl p-4 shadow-2xl border border-white/10"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* ◀ Prev / Next ▶ */}
-      {showNav && (
-        <div className="flex items-center justify-between gap-2 mb-4">
+      {/* 🖼 Artist Image with Navigation */}
+      <div className="flex items-center justify-center gap-3 mb-3">
+        {/* ◀ Prev Button */}
+        {showNav && (
           <motion.button
             type="button"
             onClick={onPrev}
             disabled={currentIndex <= 0}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 text-white/90
-                      hover:bg-white/20 disabled:opacity-40 disabled:pointer-events-none
-                      text-sm font-medium border border-white/10"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white/90
+                      hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none
+                      text-sm font-bold border border-white/10 transition-all"
           >
-            ◀ Prev
+            ◀
           </motion.button>
-          <span className="text-white/60 text-sm tabular-nums">
-            {currentIndex + 1} / {totalCount}
-          </span>
+        )}
+
+        <img
+          src={artist.images[0]?.url}
+          alt={artist.name}
+          className="w-28 h-28 rounded-full object-cover shadow-xl border border-white/10"
+        />
+
+        {/* Next ▶ Button */}
+        {showNav && (
           <motion.button
             type="button"
             onClick={onNext}
             disabled={currentIndex >= totalCount - 1}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 text-white/90
-                      hover:bg-white/20 disabled:opacity-40 disabled:pointer-events-none
-                      text-sm font-medium border border-white/10"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white/90
+                      hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none
+                      text-sm font-bold border border-white/10 transition-all"
           >
-            Next ▶
+            ▶
           </motion.button>
+        )}
+      </div>
+
+      {/* カウンター表示 */}
+      {showNav && (
+        <div className="text-center mb-2">
+          <span className="text-white/60 text-xs tabular-nums">
+            {currentIndex + 1} / {totalCount}
+          </span>
         </div>
       )}
-
-      {/* 🖼 Artist Image */}
-      <div className="flex justify-center">
-        <img
-          src={artist.images[0]?.url}
-          alt={artist.name}
-          className="w-32 h-32 rounded-full object-cover shadow-xl border border-white/10"
-        />
-      </div>
 
       {/* 🎤 Name */}
       <h3 className="text-white text-xl font-semibold text-center mt-4">

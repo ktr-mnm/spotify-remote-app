@@ -124,34 +124,62 @@ export default function NowPlaying(
   return (
     <>
       <motion.div
-        className="w-full mx-auto bg-white/5 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/10"
+        className="w-full mx-auto bg-gradient-to-br from-black/40 via-blue-950/20 to-black/40 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/10 relative overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
+        {/* 背景グロー */}
+        <motion.div
+          className="absolute -inset-px rounded-3xl bg-gradient-to-br from-green-500/10 via-blue-500/5 to-purple-500/10 blur-2xl -z-10 pointer-events-none"
+          animate={{
+            opacity: [0.6, 1, 0.6],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
         {/* 🎨 Album Art */}
         <div className="relative flex justify-center">
           {/* オーラ背景 */}
           <motion.div
-            className="absolute inset-0 rounded-3xl blur-3xl opacity-40 bg-gradient-to-br from-green-400 via-blue-500 to-purple-500"
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
-          />
+          className="absolute inset-0 rounded-3xl blur-3xl opacity-30 bg-gradient-to-br from-green-400 via-blue-500 to-purple-500"
+          animate={{
+            rotate: 360,
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            rotate: { repeat: Infinity, duration: 25, ease: "linear" },
+            scale: { repeat: Infinity, duration: 6, ease: "easeInOut" },
+          }}
+        />
 
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={track.id}
-              layoutId="album-art"
-              src={track.album.images[0]?.url}
-              alt={track.name}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.4 }}
-              className="relative w-72 h-72 md:w-100 md:h-100 rounded-3xl shadow-2xl z-10 cursor-pointer"
-              onClick={() => setShowModal(true)}
-            />
-          </AnimatePresence>
+        {/* オーラ背景 レイヤー2 */}
+        <motion.div
+          className="absolute inset-0 rounded-3xl blur-3xl opacity-20 bg-gradient-to-tl from-purple-500 via-cyan-500 to-green-400"
+          animate={{
+            rotate: -360,
+            scale: [1.15, 1, 1.15],
+          }}
+          transition={{
+            rotate: { repeat: Infinity, duration: 30, ease: "linear" },
+            scale: { repeat: Infinity, duration: 7, ease: "easeInOut" },
+          }}
+        />
+
+        <motion.img
+          key={track.id}
+          layoutId="album-art"
+          src={track.album.images[0]?.url}
+          alt={track.name}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative w-72 h-72 md:w-100 md:h-100 rounded-3xl shadow-2xl z-10 cursor-pointer"
+          onClick={() => setShowModal(true)}
+        />
 
           {/* 🔊 Volume Badge */}
           {volume !== null && (
@@ -218,18 +246,21 @@ export default function NowPlaying(
       <AnimatePresence>
         {showModal && (
           <motion.div
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur flex items-center justify-center"
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowModal(false)}
           >
             <motion.img
-              layoutId="album-art"
               src={track.album.images[0]?.url}
               alt={track.name}
               className="w-[90vw] max-w-xl rounded-3xl shadow-2xl"
               onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
 
             {/* ❌ Close */}
