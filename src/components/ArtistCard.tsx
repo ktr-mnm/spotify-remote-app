@@ -29,8 +29,8 @@ export default function ArtistCard({ artist, currentIndex = 0, totalCount = 1, o
     >
       {/* 🖼 Artist Image with Navigation */}
       <div className="flex items-center justify-center gap-3 mb-3">
-        {/* ◀ Prev Button */}
-        {showNav && (
+        {/* ◀ Prev Button or Placeholder */}
+        {showNav ? (
           <motion.button
             type="button"
             onClick={onPrev}
@@ -43,6 +43,8 @@ export default function ArtistCard({ artist, currentIndex = 0, totalCount = 1, o
           >
             ◀
           </motion.button>
+        ) : (
+          <div className="w-9 h-9" />
         )}
 
         <img
@@ -51,8 +53,8 @@ export default function ArtistCard({ artist, currentIndex = 0, totalCount = 1, o
           className="w-28 h-28 rounded-full object-cover shadow-xl border border-white/10"
         />
 
-        {/* Next ▶ Button */}
-        {showNav && (
+        {/* Next ▶ Button or Placeholder */}
+        {showNav ? (
           <motion.button
             type="button"
             onClick={onNext}
@@ -65,17 +67,19 @@ export default function ArtistCard({ artist, currentIndex = 0, totalCount = 1, o
           >
             ▶
           </motion.button>
+        ) : (
+          <div className="w-9 h-9" />
         )}
       </div>
 
       {/* カウンター表示 */}
-      {showNav && (
-        <div className="text-center mb-2">
+      <div className="text-center mb-2 h-4">
+        {showNav && (
           <span className="text-white/60 text-xs tabular-nums">
             {currentIndex + 1} / {totalCount}
           </span>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 🎤 Name */}
       <h3 className="text-white text-xl font-semibold text-center mt-4">
